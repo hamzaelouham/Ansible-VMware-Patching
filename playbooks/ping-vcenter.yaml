@@ -1,7 +1,23 @@
 ---
-- name: Ping vCenter servers
-  hosts: all
+- name: Test Connectivity to vCenter Servers
+  hosts: localhost
   gather_facts: no
   tasks:
-    - name: Test connectivity to vCenter servers
-      ping:
+    - name: Test vCenter Authentication
+      community.vmware.vmware_version:
+        hostname: "{{ item }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: false
+      loop:
+        - 10.10.107.53
+        - 10.10.107.55
+        - 10.10.107.56
+        - 10.10.107.57
+      register: vcenter_results
+
+    - name: Display vCenter versions
+      debug:
+        msg: "Connected to {{ item.hostname }}: vCenter version {{ item.version }}"
+      loop: "{{ vcenter_results.results }}"
+      when: item.failed is not defined or not item.failed
