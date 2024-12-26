@@ -6,7 +6,7 @@
     datastore: "/vmfs/volumes/patches/"  
   tasks:
     - name: Find the uploaded patch file dynamically
-      shell: ls {{ datastore }}*.zip
+      shell: ls {{ datastore }} | grep 'depot.zip'
       register: patch_file
       changed_when: false
 
