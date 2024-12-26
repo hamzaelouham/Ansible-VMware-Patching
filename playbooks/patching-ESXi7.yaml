@@ -1,5 +1,5 @@
 ---
-- name: Offline ESXi7 Patching 
+- name: Offline ESXi Patching 
   hosts: all
   gather_facts: no
   vars:
@@ -19,7 +19,7 @@
       command: esxcli system maintenanceMode set --enable true
 
     - name: Extract profile name from patch file
-      shell: "esxcli software sources profile list -d {{ datastore_path }}{{ patch_file.stdout.strip() }} | 
+      shell: "esxcli software sources profile list -d {{ datastore }}{{ patch_file.stdout.strip() }} | 
           grep standard | awk '{print $1}'"
       register: profile_name
       changed_when: false
