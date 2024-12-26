@@ -1,5 +1,5 @@
 ---
-- name:  ESXi Patching 
+- name: Offline ESXi Patching 
   hosts: all
   gather_facts: no
   vars:
@@ -7,7 +7,7 @@
   tasks:
 
     # Step 1: List all files in the datastore
-    - name: List files in the datastore
+    - name: List all files in the datastore
       shell: ls {{ datastore_path }}
       register: file_list
       changed_when: false
@@ -24,7 +24,7 @@
       changed_when: false
 
     # Debugging the patch file result to verify the matched file
-    - name: Debug the patch file result
+    - name: Debug patch file result
       debug:
         var: patch_file.stdout
 
@@ -78,7 +78,7 @@
     # Step 10: Wait for the ESXi host to come back online
     - name: Wait for the ESXi host to come back online
       wait_for_connection:
-        timeout: 900
+        timeout: 300
 
     # Step 11: Exit maintenance mode after patching
     - name: Exit maintenance mode
