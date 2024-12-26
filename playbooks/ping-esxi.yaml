@@ -5,3 +5,4 @@
   tasks:
     - name: Test connectivity to ESXi hosts
       ping:
+    

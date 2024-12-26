@@ -1,0 +1,51 @@
+---
+- name: Offline ESXi7 Patching 
+  hosts: all
+  gather_facts: no
+  vars:
+    datastore: "/vmfs/volumes/patches/"  
+  tasks:
+    - name: Find the uploaded patch file dynamically
+      shell: ls {{ datastore }}*.zip
+      register: patch_file
+      changed_when: false
+
+    - name: Verify if patch file exists
+      fail:
+        msg: "No patch file found in the datastore!"
+      when: patch_file.stdout == ""
+
+    - name: Place ESXi in maintenance mode
+      command: esxcli system maintenanceMode set --enable true
+
+    - name: Extract profile name from patch file
+      shell: "esxcli software sources profile list -d {{ datastore_path }}{{ patch_file.stdout.strip() }} | 
+          grep standard | awk '{print $1}'"
+      register: profile_name
+      changed_when: false
+
+    - name: Verify if profile name was found
+      fail:
+        msg: "No profile found in the depot file!"
+      when: profile_name.stdout == ""
+
+    - name: Apply the profile update
+      command: > 
+        esxcli software profile update 
+        -p {{ profile_name.stdout.strip() }}
+        -d {{ patch_file.stdout }}
+        --no-hardware-warning
+
+    - name: Reboot the ESXi host
+      command: reboot
+      ignore_errors: true
+
+    - name: Wait for the ESXi host to come back online
+      wait_for_connection:
+        timeout: 900
+
+    - name: Exit maintenance mode
+      command: esxcli system maintenanceMode set --enable false
+
+
+      
