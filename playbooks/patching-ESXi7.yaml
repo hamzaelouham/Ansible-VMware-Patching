@@ -78,7 +78,7 @@
     # Step 10: Wait for the ESXi host to come back online
     - name: Wait for the ESXi host to come back online
       wait_for_connection:
-        timeout: 300
+        timeout: 800
 
     # Step 11: Exit maintenance mode after patching
     - name: Exit maintenance mode
