@@ -5,11 +5,14 @@
   - name: Run custom vCenter patch download module
     download_vCenter_patches:
       date: "05/21/2024"
-      release: "7.0"
+      release: "{{ item }}"
       path: "./library/patches"
       cookie_file: "./cookies.txt"
+    loop:
+      - "7.0"
+      - "8.0"
     register: result
 
-  - name: print result
+  - name: print results for both releases
     debug:
-      msg: '{{ result }}'
+      msg: '{{ result.results }}'
