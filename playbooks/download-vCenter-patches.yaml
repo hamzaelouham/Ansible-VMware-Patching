@@ -6,7 +6,7 @@
     download_vCenter_patches:
       date: "05/21/2024"
       release: "{{ item }}"
-      path: "./library/patches"
+      path: "/root/patching/downloads"
       cookie_file: "./cookies.txt"
     loop:
       - "7.0"
