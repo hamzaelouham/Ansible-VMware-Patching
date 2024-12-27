@@ -5,9 +5,12 @@
   - name: Run custom ESXi patch download module
     download_ESXi_patches:
       date: "05/21/2024"
-      release: "7.0"
-      path: "./library/patches"
+      release: "{{ item }}"
+      path: "/root/patching/downloads"
       cookie_file: "./cookies.txt"
+    loop:
+      - "7.0"
+      - "8.0"
     register: result
 
   - name: print result
