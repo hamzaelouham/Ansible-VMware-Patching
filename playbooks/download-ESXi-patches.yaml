@@ -1,5 +1,7 @@
 - name: download ESXi patches using custom ansible module
   hosts: localhost
+  vars:
+    ansible_python_interpreter: /root/patching/env/bin/python
   gather_facts: false
   tasks:
   - name: Run custom ESXi patch download module
