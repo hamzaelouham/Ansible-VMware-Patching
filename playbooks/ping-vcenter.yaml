@@ -1,23 +1,21 @@
 ---
-- name: Test Connectivity to vCenter Servers
+- name: Update vCenter Server to latest patch
   hosts: localhost
   gather_facts: no
-  tasks:
-    - name: Test vCenter Authentication
-      community.vmware.vmware_version:
-        hostname: "{{ item }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: false
-      loop:
-        - 10.10.107.53
-        - 10.10.107.55
-        - 10.10.107.56
-        - 10.10.107.57
-      register: vcenter_results
+  vars:
+    vcsa_url: "https://your-vcenter-server.com"
+    vcsa_username: "administrator@vsphere.local"
+    vcsa_password: "your_password"
 
-    - name: Display vCenter versions
+  tasks:
+    - name: Check current vCenter version
+      vmware.vmware_rest.vcsa_system_info:
+        hostname: "{{ vcsa_url }}"
+        username: "{{ vcsa_username }}"
+        password: "{{ vcsa_password }}"
+        validate_certs: no
+      register: current_version
+
+    - name: Display current version
       debug:
-        msg: "Connected to {{ item.hostname }}: vCenter version {{ item.version }}"
-      loop: "{{ vcenter_results.results }}"
-      when: item.failed is not defined or not item.failed
+        msg: "Current version: {{ current_version.system.version }}"
