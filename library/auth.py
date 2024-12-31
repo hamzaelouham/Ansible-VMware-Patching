@@ -1,19 +1,18 @@
 import aiohttp
 import asyncio
 
-
 async def authenticate_vcenter(vcenter_hostname, username, password, validate_certs=True):
     """
-    Authenticate to vCenter and return a session ID.
+    Authenticate to VMware vCenter and retrieve a session ID.
 
     Args:
         vcenter_hostname (str): The hostname or IP of the vCenter server.
-        username (str): Username for authentication.
-        password (str): Password for authentication.
+        username (str): Username for vCenter authentication.
+        password (str): Password for vCenter authentication.
         validate_certs (bool): Whether to validate SSL certificates.
 
     Returns:
-        str: A valid session ID, or None if authentication fails.
+        str: Session ID if authentication is successful, None otherwise.
     """
     url = f"https://{vcenter_hostname}/rest/com/vmware/cis/session"
     auth = aiohttp.BasicAuth(username, password)
@@ -34,9 +33,9 @@ async def authenticate_vcenter(vcenter_hostname, username, password, validate_ce
             return None
 
 
-async def get_vcenter_updates(vcenter_hostname, session_id, validate_certs=True):
+async def check_cdrom_updates(vcenter_hostname, session_id, validate_certs=True):
     """
-    Retrieve update information from VMware vCenter.
+    Check for pending updates from the CD-ROM source.
 
     Args:
         vcenter_hostname (str): The hostname or IP of the vCenter server.
@@ -44,18 +43,19 @@ async def get_vcenter_updates(vcenter_hostname, session_id, validate_certs=True)
         validate_certs (bool): Whether to validate SSL certificates.
 
     Returns:
-        dict: Update information, or None if an error occurs.
+        dict: Update information, or None if no updates are available.
     """
     url = f"https://{vcenter_hostname}/rest/appliance/update/pending"
     headers = {
         "vmware-api-session-id": session_id,
         "Content-Type": "application/json",
     }
+    payload = {"source_type": "CDROM"}
 
     connector = aiohttp.TCPConnector(ssl=validate_certs)
     async with aiohttp.ClientSession(connector=connector) as session:
         try:
-            async with session.get(url, headers=headers) as response:
+            async with session.post(url, headers=headers, json=payload) as response:
                 if response.status == 200:
                     return await response.json()
                 else:
@@ -80,13 +80,13 @@ async def main():
         print("Failed to authenticate to vCenter.")
         return
 
-    # Retrieve update information
-    updates = await get_vcenter_updates(vcenter_hostname, session_id, validate_certs)
+    # Check for CD-ROM updates
+    updates = await check_cdrom_updates(vcenter_hostname, session_id, validate_certs)
     if updates:
-        print("Update Information:")
+        print("CD-ROM Update Information:")
         print(updates)
     else:
-        print("No update information available.")
+        print("No CD-ROM updates available.")
 
 
 # Run the script
