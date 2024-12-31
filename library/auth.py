@@ -3,7 +3,7 @@ import asyncio
 
 async def authenticate_vcenter(vcenter_hostname, username, password):
     """
-    Authenticate to VMware vCenter and retrieve a session ID.
+    Authenticate to VMware vCenter and retrieve a session ID, ignoring SSL certificate validation.
 
     Args:
         vcenter_hostname (str): The hostname or IP address of the vCenter server.
@@ -14,7 +14,8 @@ async def authenticate_vcenter(vcenter_hostname, username, password):
         str: A session ID token for authenticated requests.
     """
     auth_url = f"https://{vcenter_hostname}/rest/com/vmware/cis/session"
-    async with aiohttp.ClientSession() as session:
+    connector = aiohttp.TCPConnector(ssl=False)
+    async with aiohttp.ClientSession(connector=connector) as session:
         try:
             async with session.post(auth_url, auth=aiohttp.BasicAuth(username, password)) as response:
                 if response.status == 200:
@@ -26,6 +27,7 @@ async def authenticate_vcenter(vcenter_hostname, username, password):
         except aiohttp.ClientError as e:
             print(f"Error connecting to vCenter: {e}")
             return None
+
 
 # Example usage
 async def main():
