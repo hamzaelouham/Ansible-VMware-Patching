@@ -45,7 +45,7 @@ async def check_cdrom_updates(vcenter_hostname, session_id, validate_certs=True)
     Returns:
         dict: Update information, or None if no updates are available.
     """
-    url = f"https://{vcenter_hostname}/rest/appliance/update/pending"
+    url = f"https://{vcenter_hostname}/api/appliance/update/pending"
     headers = {
         "vmware-api-session-id": session_id,
         "Content-Type": "application/json",

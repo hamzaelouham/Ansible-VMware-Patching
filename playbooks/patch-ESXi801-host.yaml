@@ -1,0 +1,85 @@
+---
+- name: Offline ESXi801 Patching 
+  hosts: all
+  gather_facts: no
+  vars:
+    datastore_path: "/vmfs/volumes/patching/"  # Ensure the datastore path is defined here
+  tasks:
+
+    # Step 1: List all files in the datastore
+    - name: List all files in the datastore
+      shell: ls {{ datastore_path }}
+      register: file_list
+      changed_when: false
+
+    # Debug the file list to check if the files are being listed correctly
+    - name: Debug file list
+      debug:
+        var: file_list.stdout
+
+    # Step 2: Find the uploaded patch file dynamically by filtering for depot.zip files
+    - name: Find the uploaded patch file dynamically
+      shell: ls {{ datastore_path }} | grep -i 'depot.zip'
+      register: patch_file
+      changed_when: false
+
+    # Debugging the patch file result to verify the matched file
+    - name: Debug patch file result
+      debug:
+        var: patch_file.stdout
+
+    # Step 3: Verify if the patch file exists
+    - name: Verify if patch file exists
+      fail:
+        msg: "No patch file matching '*depot.zip' found in the datastore!"
+      when: patch_file.stdout.strip() == ""
+
+    # Step 4: Construct the full path to the patch file
+    - name: Construct the full path to the patch file
+      set_fact:
+        patch_file_path: "{{ datastore_path }}{{ patch_file.stdout.strip() }}"
+
+    # Debug the full patch file path to verify the correct file path
+    - name: Debug the full patch file path
+      debug:
+        var: patch_file_path
+
+    # Step 5: Extract profile name from patch file using esxcli
+    - name: Extract profile name from patch file
+      shell: >
+        esxcli software sources profile list -d {{ patch_file_path }} |
+        grep standard | awk '{print $1}'
+      register: profile_name
+      changed_when: false
+
+    # Step 6: Verify if profile name was found
+    - name: Verify if profile name was found
+      fail:
+        msg: "No profile found in the depot file {{ patch_file_path }}!"
+      when: profile_name.stdout == ""
+
+    # Step 7: Put ESXi host in maintenance mode
+    - name: Place ESXi in maintenance mode
+      command: esxcli system maintenanceMode set --enable true
+
+    # Step 8: Apply the patch update using the extracted profile
+    - name: Apply the profile update
+      command: >
+        esxcli software profile update 
+        -p {{ profile_name.stdout.strip() }} 
+        -d {{ patch_file_path }} 
+        --no-hardware-warning
+
+    # Step 9: Reboot the ESXi host
+    - name: Reboot the ESXi host
+      command: reboot
+      ignore_errors: true
+
+    # Step 10: Wait for the ESXi host to come back online
+    - name: Wait for the ESXi host to come back online
+      wait_for_connection:
+        timeout: 800
+
+    # Step 11: Exit maintenance mode after patching
+    - name: Exit maintenance mode
+      command: esxcli system maintenanceMode set --enable false
