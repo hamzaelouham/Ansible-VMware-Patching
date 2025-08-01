@@ -66,7 +66,7 @@
     - name: Apply the profile update
       command: >
         esxcli software profile update 
-        -p {{ profile_name.stdout.strip() }} 
+        -p {{ profile_name.stdout.strip().split()[0] }} 
         -d {{ patch_file_path }} 
         --no-hardware-warning
 
