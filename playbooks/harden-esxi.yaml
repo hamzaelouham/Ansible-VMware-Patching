@@ -1,0 +1,85 @@
+---
+- name: ESXi Hardening 
+  hosts: all
+  gather_facts: no
+
+  tasks:
+    # ================== System ==================
+    - name: Enable maintenance mode
+      ansible.builtin.command: >
+        esxcli system maintenanceMode set -e=true
+
+    - name: Disable memory pages sharing between VMs
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update Mem.ShareForceSalting long 2
+
+    - name: Disable Managed Object Browser (MOB)
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update Config.HostAgent.plugins.solo.enableMob bool false
+
+    - name: Enable ESXi firewall
+      ansible.builtin.command: >
+        esxcli network firewall set --enabled true
+
+    - name: Set ESXi firewall default action to deny
+      ansible.builtin.command: >
+        esxcli network firewall set --default-action false
+
+    - name: Disable old SSL/TLS protocols and allow only TLS 1.2
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update UserVars.ESXiVPsDisabledProtocols string tlsv1.2
+
+    - name: Set software acceptance level
+      ansible.builtin.command: >
+        esxcli software acceptance set --level PartnerSupported
+
+    - name: Block guest OS BPDU transmissions
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update Net.BlockGuestBPDU int 1
+
+    # ================== User Management ==================
+    - name: Set DCUI/ESXi Host Web UI login banner
+      ansible.builtin.command: >
+        esxcli system welcomemsg set -m="{bgcolor:black}{color:red}WARNING==> This is restricted IT asset managed by Atos. Unauthorized access is prohibited and only authorised user's are permited. Any activity is monitored at all times and unauthorized access are violating Atos IT asset access regulation policy. By continuing into this system, you are acknowledging that you are aware of and agrees to all the terms.
+        LOGIN Instructions - To Login ESXi Web console provide required credentials.
+        LOGIN Instructions - To Login ESXi DCUI Press F2"
+
+    - name: Set SSH login banner
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update Config.Etc.issue string "WARNING==> This is restricted IT asset managed by Atos. Unauthorized access is prohibited and only authorised user's are permited. Any activity is monitored at all times and unauthorized access are violating Atos IT asset access regulation policy. By continuing into this system, you are acknowledging that you are aware of and agrees to all the terms."
+
+    - name: Set ESXi Shell login banner
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update Config.Etc.motd string "WARNING==>This is restricted IT asset managed by Atos. Unauthorized access is prohibited and only authorised user's are permited. Any activity is monitored at all times and unauthorized access are violating Atos IT asset access regulation policy. By continuing into this system, you are acknowledging that you are aware of and agrees to all the terms."
+
+    - name: Set ESXi Host Client welcome message
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update UserVars.HostClientWelcomeMessage string "Welcome to Atos Managed ESXi host"
+
+    - name: Set DCUI idle timeout
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update UserVars.DcuiTimeOut int 600
+
+    - name: Set Host Client session timeout
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update UserVars.HostClientSessionTimeout int 600
+
+    - name: Set ESXi Shell idle timeout
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update UserVars.ESXiShellInteractiveTimeOut int 900
+
+    - name: Set SSH idle timeout
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update UserVars.ESXiShellTimeOut int 900
+
+    - name: Set account unlock time
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update Security.AccountUnlockTime int 1800
+
+    - name: Set account lock failures
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update Security.AccountLockFailures int 3
+
+    - name: Suppress shell warning
+      ansible.builtin.command: >
+        vim-cmd hostsvc/advopt/update UserVars.SuppressShellWarning int 0
