@@ -25,9 +25,9 @@
       ansible.builtin.command: >
         esxcli network firewall set --default-action false
 
-    - name: Disable old SSL/TLS protocols and allow only TLS 1.2
-      ansible.builtin.command: >
-        vim-cmd hostsvc/advopt/update UserVars.ESXiVPsDisabledProtocols string tlsv1.2
+    # - name: Disable old SSL/TLS protocols and allow only TLS 1.2
+    #   ansible.builtin.command: >
+    #     vim-cmd hostsvc/advopt/update UserVars.ESXiVPsDisabledProtocols string tlsv1.2
 
     - name: Set software acceptance level
       ansible.builtin.command: >
