@@ -5,10 +5,6 @@
 
   tasks:
     # ================== System ==================
-    - name: Enable maintenance mode
-      ansible.builtin.command: >
-        esxcli system maintenanceMode set -e=true
-
     - name: Disable memory pages sharing between VMs
       ansible.builtin.command: >
         vim-cmd hostsvc/advopt/update Mem.ShareForceSalting long 2
