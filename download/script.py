@@ -3,19 +3,24 @@ import requests
 import shutil
 import os
 
-
-# Configuration for app authentication/end points
+# ==============================
+# Configuration
+# ==============================
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 TENANT_ID = os.getenv("TENANT_ID")
 AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
 SCOPE = ["https://graph.microsoft.com/.default"]
-AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
+
 SITE_URL = "atos365.sharepoint.com:/sites/100004478"  # Update with your site URL
 DOCUMENT_LIBRARY_NAME = "Documents"  # Update if different
 DOWNLOAD_PATH = "./downloads"
-FOLDER_PATH = "Atos_Global_Images/Linux/Linux_OVF_Template"  # Full folder path
+FOLDER_PATH = "Atos_Global_Images/Linux/Linux_OVF_Template"  # Folder in SharePoint
 
+
+# ==============================
+# Authentication
+# ==============================
 def get_access_token():
     """Authenticate and get an access token for Microsoft Graph API."""
     app = ConfidentialClientApplication(
@@ -28,8 +33,11 @@ def get_access_token():
         return result["access_token"]
     else:
         raise Exception("Failed to acquire access token:", result.get("error_description"))
-    
 
+
+# ==============================
+# SharePoint Helper Functions
+# ==============================
 def get_site_id(access_token):
     """Retrieve the Site ID for the given SharePoint site."""
     headers = {"Authorization": f"Bearer {access_token}"}
@@ -39,7 +47,7 @@ def get_site_id(access_token):
         return response.json()["id"]
     else:
         raise Exception(f"Error getting site ID: {response.status_code}, {response.text}")
-    
+
 
 def get_drive_id(access_token, site_id):
     """Retrieve the Drive ID for the document library."""
@@ -70,37 +78,50 @@ def list_folder_contents(access_token, site_id, drive_id, folder_path):
             url = data.get("@odata.nextLink")  # Handle pagination
         else:
             raise Exception(f"Error listing folder contents: {response.status_code}, {response.text}")
-    
+
     return items
 
+
+# ==============================
+# Download Logic (ZIP only)
+# ==============================
 def download_folder(access_token, site_id, drive_id, folder_path, local_path, is_root=True):
     """
-    Download all files and folders from a SharePoint folder.
-    The top-level folder's contents go directly into local_path.
+    Recursively download only .zip files from a SharePoint folder and its subfolders.
     """
     items = list_folder_contents(access_token, site_id, drive_id, folder_path)
 
     for item in items:
         item_name = item["name"]
-        item_path = os.path.join(local_path, item_name)
 
+        # ✅ If it's a folder, go inside (recursive)
         if "folder" in item:
-            print(f"Creating folder: {item_path}")
-            os.makedirs(item_path, exist_ok=True)
-            download_folder(access_token, site_id, drive_id, f"{folder_path}/{item_name}", item_path, is_root=False)
+            print(f"Entering folder: {item_name}")
+            download_folder(access_token, site_id, drive_id, f"{folder_path}/{item_name}", local_path, is_root=False)
 
-        elif "file" in item:
-            print(f"Downloading file: {item_name}")
+        # ✅ If it's a file and ends with .zip, download it
+        elif "file" in item and item_name.lower().endswith(".zip"):
+            os.makedirs(local_path, exist_ok=True)
+            file_path = os.path.join(local_path, item_name)
             file_url = item["@microsoft.graph.downloadUrl"]
+
+            print(f"Downloading ZIP file: {item_name}")
             with requests.get(file_url, stream=True) as response:
-                with open(item_path, "wb") as file:
+                response.raise_for_status()
+                with open(file_path, "wb") as file:
                     shutil.copyfileobj(response.raw, file)
 
-    if is_root:
-        print(f"Download completed for root folder: {folder_path}")
-    else:
-        print(f"Download completed for subfolder: {folder_path}")
+        # ✅ Skip all other files
+        else:
+            print(f"Skipping non-ZIP file: {item_name}")
 
+    if is_root:
+        print(f"✅ Download completed for: {folder_path}")
+
+
+# ==============================
+# Main Execution
+# ==============================
 if __name__ == "__main__":
     try:
         print("Authenticating to Microsoft Graph API...")
@@ -113,8 +134,8 @@ if __name__ == "__main__":
         print(f"Fetching Drive ID for '{DOCUMENT_LIBRARY_NAME}'...")
         drive_id = get_drive_id(token, site_id)
 
-        print(f"Downloading contents of '{FOLDER_PATH}' into '{DOWNLOAD_PATH}'...")
+        print(f"Starting ZIP download from '{FOLDER_PATH}' into '{DOWNLOAD_PATH}'...")
         download_folder(token, site_id, drive_id, FOLDER_PATH, DOWNLOAD_PATH)
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"❌ Error: {e}")
