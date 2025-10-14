@@ -85,21 +85,21 @@ def list_folder_contents(access_token, site_id, drive_id, folder_path):
 # ==============================
 # Download Logic (ZIP only)
 # ==============================
-def download_folder(access_token, site_id, drive_id, folder_path, local_path, is_root=True):
+def download_folder(access_token, site_id, drive_id, folder_path, local_path):
     """
-    Recursively download only .zip files from a SharePoint folder and its subfolders.
+    Download only .zip files from the top-level SharePoint folder (no subfolders).
     """
     items = list_folder_contents(access_token, site_id, drive_id, folder_path)
 
     for item in items:
         item_name = item["name"]
 
-        # ✅ If it's a folder, go inside (recursive)
+        # Skip folders completely
         if "folder" in item:
-            print(f"Entering folder: {item_name}")
-            download_folder(access_token, site_id, drive_id, f"{folder_path}/{item_name}", local_path, is_root=False)
+            print(f"Skipping folder: {item_name}")
+            continue
 
-        # ✅ If it's a file and ends with .zip, download it
+        # Download only .zip files
         elif "file" in item and item_name.lower().endswith(".zip"):
             os.makedirs(local_path, exist_ok=True)
             file_path = os.path.join(local_path, item_name)
@@ -111,14 +111,10 @@ def download_folder(access_token, site_id, drive_id, folder_path, local_path, is
                 with open(file_path, "wb") as file:
                     shutil.copyfileobj(response.raw, file)
 
-        # ✅ Skip all other files
         else:
             print(f"Skipping non-ZIP file: {item_name}")
 
-    if is_root:
-        print(f"✅ Download completed for: {folder_path}")
-
-
+    print(f"✅ Top-level ZIP download completed for: {folder_path}")
 # ==============================
 # Main Execution
 # ==============================
