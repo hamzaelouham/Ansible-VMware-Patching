@@ -126,7 +126,7 @@ if __name__ == "__main__":
         drive_id = get_drive_id(token, site_id)
 
         print(f"Starting ZIP download from '{FOLDER_PATH}' into '{DOWNLOAD_PATH}'...")
-        download_folder(token, site_id, drive_id, FOLDER_PATH, DOWNLOAD_PATH)
+        print_download_links(token, site_id, drive_id, FOLDER_PATH, DOWNLOAD_PATH)
 
     except Exception as e:
         print(f"❌ Error: {e}")
