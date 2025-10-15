@@ -14,7 +14,7 @@ SCOPE = ["https://graph.microsoft.com/.default"]
 
 SITE_URL = "atos365.sharepoint.com:/sites/100004478"  # Update with your site URL
 DOCUMENT_LIBRARY_NAME = "Documents"  # Update if different
-DOWNLOAD_PATH = "/home/atosadm/gppDownloads"
+DOWNLOAD_PATH = "/gppdownloads"
 FOLDER_PATH = "Atos_Global_Images/Linux/Linux_OVF_Template"  # Folder in SharePoint
 
 
